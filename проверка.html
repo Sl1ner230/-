@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Клановая система | Replit</title>
+    <style>
+        :root {
+            --bg-color: #1a1a1a;
+            --card-color: #2d2d2d;
+            --text-color: #e0e0e0;
+            --accent-color: #4a76a8;
+            --border-color: #444;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-color);
+            color: var(--text-color);
+            padding: 20px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        h1, h2, h3 {
+            color: var(--accent-color);
+            margin: 0;
+        }
+        
+        .btn {
+            padding: 8px 15px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: opacity 0.2s;
+        }
+        
+        .btn:hover {
+            opacity: 0.9;
+        }
+        
+        .btn-primary {
+            background: var(--accent-color);
+            color: white;
+        }
+        
+        .btn-success {
+            background: #5cb85c;
+            color: white;
+        }
+        
+        .btn-danger {
+            background: #d9534f;
+            color: white;
+        }
+        
+        .player-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .player-card {
+            background: var(--card-color);
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            text-align: center;
+        }
+        
+        .player-card:hover {
+            transform: translateY(-3px);
+        }
+        
+        .player-name {
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .player-total {
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+        
+        /* Страница статистики */
+        .stats-page {
+            display: none;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-item {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.8rem;
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+        
+        /* Админ-панель */
+        .admin-panel {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input {
+            width: 100%;
+            padding: 10px;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            border-radius: 4px;
+        }
+        
+        /* Модальное окно */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background: var(--card-color);
+            padding: 25px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 350px;
+        }
+        
+        .modal-title {
+            margin-top: 0;
+            color: var(--accent-color);
+        }
+        
+        .error-message {
+            color: #ff6b6b;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        @media (max-width: 600px) {
+            .player-list {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Модальное окно входа -->
+        <div id="loginModal" class="modal">
+            <div class="modal-content">
+                <h3 class="modal-title">Вход администратора</h3>
+                <input type="password" id="adminPassword" placeholder="Введите пароль">
+                <button class="btn btn-primary" onclick="checkAdmin()" style="margin-top: 15px; width: 100%;">Войти</button>
+                <p id="loginError" class="error-message">Неверный пароль!</p>
+            </div>
+        </div>
+
+        <!-- Главная страница -->
+        <div id="mainPage">
+            <div class="header">
+                <h1>Игроки клана</h1>
+                <button id="adminLoginBtn" class="btn btn-primary" onclick="showLoginModal()">Вход админа</button>
+            </div>
+            
+            <!-- Секция добавления игрока (только для админа) -->
+            <div id="addPlayerSection" class="admin-panel">
+                <h3>Добавить игрока</h3>
+                <div class="form-group">
+                    <input type="text" id="newPlayerName" placeholder="Ник игрока">
+                </div>
+                <button class="btn btn-success" onclick="addPlayer()">Добавить</button>
+            </div>
+            
+            <div class="player-list" id="playerList"></div>
+        </div>
+
+        <!-- Страница статистики -->
+        <div id="statsPage" class="stats-page">
+            <button class="btn btn-primary" onclick="goBack()">← Назад</button>
+            <h2 id="playerStatsName" style="text-align: center; margin-top: 10px;"></h2>
+            
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div>Рекрутинг</div>
+                    <div class="stat-value" id="statRecruit">0</div>
+                </div>
+                <div class="stat-item">
+                    <div>Ивенты</div>
+                    <div class="stat-value" id="statEvent">0</div>
+                </div>
+                <div class="stat-item">
+                    <div>Вложения</div>
+                    <div class="stat-value" id="statInvest">0</div>
+                </div>
+                <div class="stat-item">
+                    <div>Всего</div>
+                    <div class="stat-value" id="statTotal">0</div>
+                </div>
+            </div>
+            
+            <!-- Админ-панель редактирования -->
+            <div id="adminControls" class="admin-panel">
+                <h3>Редактирование</h3>
+                <div class="form-group">
+                    <label>Рекрутинг</label>
+                    <input type="number" id="editRecruit" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Ивенты</label>
+                    <input type="number" id="editEvent" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Вложения</label>
+                    <input type="number" id="editInvest" min="0">
+                </div>
+                <button class="btn btn-success" onclick="savePlayerStats()">Сохранить</button>
+                <button class="btn btn-danger" onclick="deletePlayer()">Удалить игрока</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Данные игроков
+        let players = JSON.parse(localStorage.getItem('clanPlayers')) || {};
+        const ADMIN_PASSWORD = "1256907834";
+        let isAdmin = false;
+        let currentPlayer = null;
+
+        // Инициализация при загрузке
+        document.addEventListener('DOMContentLoaded', function() {
+            // Демо-данные при первом запуске
+            if (Object.keys(players).length === 0) {
+                players = {
+                    "Игрок1": { recruit: 15, event: 8, invest: 5 },
+                    "Игрок2": { recruit: 10, event: 12, invest: 3 },
+                    "Игрок3": { recruit: 5, event: 6, invest: 10 }
+                };
+                saveData();
+            }
+            
+            renderPlayerList();
+        });
+
+        // Показать модальное окно входа
+        function showLoginModal() {
+            document.getElementById('loginModal').style.display = 'flex';
+            document.getElementById('adminPassword').focus();
+        }
+
+        // Проверить пароль админа
+        function checkAdmin() {
+            const inputPassword = document.getElementById('adminPassword').value;
+            
+            if (inputPassword === ADMIN_PASSWORD) {
+                isAdmin = true;
+                document.getElementById('loginModal').style.display = 'none';
+                document.getElementById('adminPassword').value = '';
+                document.getElementById('loginError').style.display = 'none';
+                
+                // Показать админ-панели
+                document.getElementById('addPlayerSection').style.display = 'block';
+                document.getElementById('adminLoginBtn').textContent = 'Админ';
+                alert('Режим администратора активирован');
+            } else {
+                document.getElementById('loginError').style.display = 'block';
+            }
+        }
+
+        // Отобразить список игроков
+        function renderPlayerList() {
+            const playerList = document.getElementById('playerList');
+            playerList.innerHTML = '';
+            
+            // Сортировка по общему количеству очков
+            const sortedPlayers = Object.entries(players).sort((a, b) => {
+                const totalA = a[1].recruit + a[1].event + a[1].invest;
+                const totalB = b[1].recruit + b[1].event + b[1].invest;
+                return totalB - totalA;
+            });
+            
+            for (const [name, stats] of sortedPlayers) {
+                const total = stats.recruit + stats.event + stats.invest;
+                
+                const card = document.createElement('div');
+                card.className = 'player-card';
+                card.innerHTML = `
+                    <div class="player-name" title="${name}">${name}</div>
+                    <div class="player-total">${total} очков</div>
+                `;
+                card.addEventListener('click', () => showPlayerStats(name));
+                
+                playerList.appendChild(card);
+            }
+        }
+
+        // Добавить нового игрока
+        function addPlayer() {
+            const name = document.getElementById('newPlayerName').value.trim();
+            
+            if (!name) {
+                alert('Введите ник игрока!');
+                return;
+            }
+            
+            if (players[name]) {
+                alert('Этот игрок уже существует!');
+                return;
+            }
+            
+            players[name] = { recruit: 0, event: 0, invest: 0 };
+            saveData();
+            renderPlayerList();
+            document.getElementById('newPlayerName').value = '';
+            alert(`Игрок ${name} добавлен!`);
+        }
+
+        // Показать статистику игрока
+        function showPlayerStats(playerName) {
+            currentPlayer = playerName;
+            const stats = players[playerName];
+            const total = stats.recruit + stats.event + stats.invest;
+            
+            document.getElementById('playerStatsName').textContent = playerName;
+            document.getElementById('statRecruit').textContent = stats.recruit;
+            document.getElementById('statEvent').textContent = stats.event;
+            document.getElementById('statInvest').textContent = stats.invest;
+            document.getElementById('statTotal').textContent = total;
+            
+            if (isAdmin) {
+                document.getElementById('editRecruit').value = stats.recruit;
+                document.getElementById('editEvent').value = stats.event;
+                document.getElementById('editInvest').value = stats.invest;
+                document.getElementById('adminControls').style.display = 'block';
+            }
+            
+            document.getElementById('mainPage').style.display = 'none';
+            document.getElementById('statsPage').style.display = 'block';
+        }
+
+        // Вернуться на главную
+        function goBack() {
+            document.getElementById('mainPage').style.display = 'block';
+            document.getElementById('statsPage').style.display = 'none';
+        }
+
+        // Сохранить статистику игрока
+        function savePlayerStats() {
+            players[currentPlayer] = {
+                recruit: parseInt(document.getElementById('editRecruit').value) || 0,
+                event: parseInt(document.getElementById('editEvent').value) || 0,
+                invest: parseInt(document.getElementById('editInvest').value) || 0
+            };
+            
+            saveData();
+            showPlayerStats(currentPlayer); // Обновить отображение
+            renderPlayerList(); // Обновить список
+            alert('Изменения сохранены!');
+        }
+
+        // Удалить игрока
+        function deletePlayer() {
+            if (confirm(`Удалить игрока ${currentPlayer}?`)) {
+                delete players[currentPlayer];
+                saveData();
+                goBack();
+                renderPlayerList();
+            }
+        }
+
+        // Сохранить данные
+        function saveData() {
+            localStorage.setItem('clanPlayers', JSON.stringify(players));
+        }
+    </script>
+</body>
+</html>
